@@ -959,53 +959,113 @@ function gerarExcel(linhas) {
   const wb  = X.utils.book_new();
   const ws  = {};
 
-  const borda = com ? (() => {
+  // Formato correto: texto "R$" entre aspas + número com separador de milhar
+  const FMT_MOEDA = '"R$" #,##0.00';
+  const FMT_DATA  = 'DD/MM/YYYY';
+
+  const bd = com ? (() => {
     const l = {style:'thin', color:{rgb:'C5D8D4'}};
     return {border:{top:l,bottom:l,left:l,right:l}};
   })() : {};
 
-  COLUNAS.forEach(({nome},c) => {
-    ws[X.utils.encode_cell({r:0,c})] = {
-      v:nome, t:'s',
-      s: com ? {
-        fill:{patternType:'solid',fgColor:{rgb:'1B6B5A'}},
-        font:{bold:true,color:{rgb:'FFFFFF'},name:'Calibri',sz:11},
-        alignment:{horizontal:'center',vertical:'center'},
-        ...borda
-      } : undefined,
-    };
+  function mkCell(v, t, s, z) {
+    const c = {v: v ?? '', t};
+    if (com && s) c.s = {...s, ...bd};
+    if (z)        c.z = z;
+    return c;
+  }
+
+  const sHeader = com ? {
+    fill:{patternType:'solid',fgColor:{rgb:'1B6B5A'}},
+    font:{bold:true,color:{rgb:'FFFFFF'},name:'Calibri',sz:11},
+    alignment:{horizontal:'center',vertical:'center'},
+  } : null;
+
+  const sTotal = com ? {
+    fill:{patternType:'solid',fgColor:{rgb:'0D3B2E'}},
+    font:{bold:true,color:{rgb:'FFFFFF'},name:'Calibri',sz:11},
+    alignment:{horizontal:'center',vertical:'center'},
+  } : null;
+
+  // ── Cabeçalho ────────────────────────────────────────────────────────────
+  COLUNAS.forEach(({nome}, c) => {
+    ws[X.utils.encode_cell({r:0,c})] = mkCell(nome, 's', sHeader);
   });
 
-  linhas.forEach((row,r) => {
-    const bg = row.tipo==='Entrada'?'E6F4F1':'FDE8E8';
-    const vals = [
-      fmtDate(row.data), row.descricao, row.tipo,
-      isNaN(row.valor)?'':row.valor,
-      isNaN(row.saldo)?'':row.saldo,
-      row.banco_origem, row.forma_pagamento,
-      row.categoria, row.apuracao, row.observacao,
+  // ── Dados ────────────────────────────────────────────────────────────────
+  linhas.forEach((row, r) => {
+    const bg = row.tipo === 'Entrada' ? 'E6F4F1' : 'FDE8E8';
+    const sData = com ? {
+      fill:{patternType:'solid',fgColor:{rgb:bg}},
+      font:{name:'Calibri',sz:10},
+    } : null;
+
+    // Data como serial numérico do Excel (base: 01/01/1900 = 1)
+    // Fórmula: dias desde epoch Unix + deslocamento para base Excel
+    const dateSerial = row.data
+      ? Math.floor(row.data.getTime() / 86400000 + 25569)
+      : null;
+
+    const valor = (!row.valor || isNaN(row.valor)) ? null : row.valor;
+    const saldo = (!row.saldo || isNaN(row.saldo)) ? null : row.saldo;
+
+    const defs = [
+      // [valor, tipo, alinhamento, formato]
+      [dateSerial,          'n', 'center', FMT_DATA ],  // c=0 Data
+      [row.descricao,       's', 'left',   null      ],  // c=1 Descrição
+      [row.tipo,            's', 'center', null      ],  // c=2 Tipo
+      [valor,               'n', 'right',  FMT_MOEDA ],  // c=3 Valor
+      [saldo,               'n', 'right',  FMT_MOEDA ],  // c=4 Saldo
+      [row.banco_origem,    's', 'left',   null      ],  // c=5 Banco
+      [row.forma_pagamento, 's', 'left',   null      ],  // c=6 Forma Pag.
+      [row.categoria,       's', 'left',   null      ],  // c=7 Categoria
+      [row.apuracao,        's', 'left',   null      ],  // c=8 Apuração
+      [row.observacao,      's', 'left',   null      ],  // c=9 Observação
     ];
-    vals.forEach((v,c) => {
-      const isN = (c===3||c===4) && typeof v==='number';
-      const cell = {
-        v: v??'',
-        t: isN?'n':'s',
-        s: com ? {
-          fill:{patternType:'solid',fgColor:{rgb:bg}},
-          font:{name:'Calibri',sz:10},
-          alignment:{vertical:'center',horizontal:isN?'right':'left'},
-          ...borda
-        } : undefined,
-      };
-      if (isN) cell.z = 'R$ #,##0.00';
-      ws[X.utils.encode_cell({r:r+1,c})] = cell;
+
+    defs.forEach(([v, t, al, fmt], c) => {
+      if (v === null && t === 'n') return; // célula vazia
+      const s = sData ? {...sData, alignment:{horizontal:al,vertical:'center'}} : null;
+      ws[X.utils.encode_cell({r: r+1, c})] = mkCell(v, t, s, fmt);
     });
   });
 
-  ws['!ref']        = X.utils.encode_range({s:{r:0,c:0},e:{r:linhas.length,c:COLUNAS.length-1}});
-  ws['!cols']       = COLUNAS.map(({wch})=>({wch}));
-  ws['!autofilter'] = {ref: X.utils.encode_range({s:{r:0,c:0},e:{r:0,c:COLUNAS.length-1}})};
-  ws['!freeze']     = {xSplit:0,ySplit:1};
+  // ── Linhas de totais ─────────────────────────────────────────────────────
+  const entradas  = linhas.filter(r => r.tipo === 'Entrada');
+  const saidas    = linhas.filter(r => r.tipo === 'Saída');
+  const sumEnt    = entradas.reduce((s,r) => s + (isNaN(r.valor) ? 0 : r.valor), 0);
+  const sumSai    = saidas.reduce((s,r)   => s + (isNaN(r.valor) ? 0 : r.valor), 0);
+  const saldoLiq  = sumEnt - sumSai;
+
+  const totalDefs = [
+    [`TOTAL ENTRADAS  (${entradas.length} lançamentos)`, sumEnt],
+    [`TOTAL SAÍDAS  (${saidas.length} lançamentos)`,     sumSai],
+    [`SALDO DO PERÍODO`,                                  saldoLiq],
+  ];
+
+  const baseTotal = linhas.length + 2; // linha em branco de separação
+  totalDefs.forEach(([label, valor], i) => {
+    const r = baseTotal + i;
+    // Preenche todas as células da linha com fundo escuro
+    for (let c = 0; c < COLUNAS.length; c++) {
+      ws[X.utils.encode_cell({r,c})] = mkCell('', 's', sTotal);
+    }
+    // Label na coluna Descrição
+    ws[X.utils.encode_cell({r, c:1})] = mkCell(label, 's',
+      com ? {...sTotal, alignment:{horizontal:'right',vertical:'center'}} : null);
+    // Valor na coluna Valor (R$)
+    ws[X.utils.encode_cell({r, c:3})] = mkCell(valor, 'n',
+      com ? {...sTotal, alignment:{horizontal:'right',vertical:'center'}} : null, FMT_MOEDA);
+  });
+
+  const lastRow = baseTotal + totalDefs.length - 1;
+
+  ws['!ref']        = X.utils.encode_range({s:{r:0,c:0}, e:{r:lastRow, c:COLUNAS.length-1}});
+  ws['!cols']       = COLUNAS.map(({wch}) => ({wch}));
+  ws['!autofilter'] = {ref: X.utils.encode_range({s:{r:0,c:0}, e:{r:0,c:COLUNAS.length-1}})};
+  // Freeze panes: linha 1 fixa (cabeçalho)
+  ws['!freeze'] = {xSplit:0, ySplit:1};
+  ws['!views']  = [{state:'frozen', xSplit:0, ySplit:1, topLeftCell:'A2', activeCell:'A2', sqref:'A2'}];
 
   X.utils.book_append_sheet(wb, ws, 'Conciliação');
   return X.write(wb, {bookType:'xlsx', type:'array', cellStyles:com});
