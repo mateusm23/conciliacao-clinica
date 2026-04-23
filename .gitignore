@@ -1,6 +1,7 @@
 # Extratos bancários (dados privados)
 *.xls
 *.xlsx
+!conciliacao_bancaria.xlsx
 
 # Python
 __pycache__/
