@@ -4,202 +4,801 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Conciliação Bancária — Clínica Meu Médico</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Biblioteca de leitura/escrita Excel (3 fontes em cascata) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx-js-style.min.js"></script>
   <script>if(typeof XLSXStyle==='undefined')document.write('<scr'+'ipt src="https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx-js-style.min.js"><\/scr'+'ipt>')</script>
   <script>if(typeof XLSXStyle==='undefined'&&typeof XLSX==='undefined')document.write('<scr'+'ipt src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"><\/scr'+'ipt>')</script>
 
   <style>
+    :root {
+      --green-900: #0D3B2E;
+      --green-700: #1B6B5A;
+      --green-600: #227A67;
+      --green-400: #4BA58E;
+      --green-100: #E6F4F1;
+      --green-50:  #F2FAF8;
+      --gray-900:  #111827;
+      --gray-700:  #374151;
+      --gray-500:  #6B7280;
+      --gray-300:  #D1D5DB;
+      --gray-100:  #F3F4F6;
+      --red-100:   #FEE2E2;
+      --red-600:   #DC2626;
+      --white:     #FFFFFF;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: #f0f7f5;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #EDF3F1;
+      color: var(--gray-900);
       min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--green-900);
+      height: 62px;
+      display: flex;
+      align-items: center;
+      padding: 0 32px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .brand-icon {
+      width: 36px; height: 36px;
+      background: var(--green-700);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .brand-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -.2px;
+    }
+
+    .brand-divider {
+      width: 1px; height: 28px;
+      background: rgba(255,255,255,.15);
+      margin: 0 16px;
+    }
+
+    .brand-module {
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,.55);
+      letter-spacing: .1px;
+    }
+
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .lib-badge {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(255,255,255,.1);
+      color: rgba(255,255,255,.5);
+    }
+    .lib-badge.ok  { background: rgba(75,165,142,.25); color: #7DDDCC; }
+    .lib-badge.err { background: rgba(220,38,38,.25);  color: #FCA5A5; }
+
+    /* ── LAYOUT ── */
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 24px 60px;
+    }
+
+    .page-title {
+      margin-bottom: 28px;
+    }
+
+    .page-title h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--gray-900);
+      letter-spacing: -.3px;
+    }
+
+    .page-title p {
+      font-size: 14px;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+
+    /* ── PANEL ── */
+    .panel {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 22px 28px;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .panel-header-icon {
+      width: 38px; height: 38px;
+      background: var(--green-100);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .panel-header h2 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .panel-header p {
+      font-size: 13px;
+      color: var(--gray-500);
+      margin-top: 1px;
+    }
+
+    .panel-body {
+      padding: 28px;
+    }
+
+    /* ── UPLOAD GRID ── */
+    .upload-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 680px) {
+      .upload-grid { grid-template-columns: 1fr; }
+    }
+
+    .upload-card {
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      transition: border-color .2s;
+    }
+
+    .upload-card.has-file {
+      border-color: var(--green-400);
+    }
+
+    .upload-card-header {
+      background: var(--gray-100);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--gray-300);
+    }
+
+    .slot-number {
+      width: 20px; height: 20px;
+      background: var(--green-700);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .slot-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray-700);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+
+    .optional-tag {
+      margin-left: auto;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--gray-500);
+      background: var(--white);
+      border: 1px solid var(--gray-300);
+      padding: 1px 7px;
+      border-radius: 20px;
+    }
+
+    .upload-card-body {
+      padding: 14px;
+    }
+
+    /* Bank select */
+    .bank-select-wrap {
+      position: relative;
+      margin-bottom: 12px;
+    }
+
+    .bank-select-wrap select {
+      width: 100%;
+      padding: 9px 32px 9px 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-700);
+      background: var(--white);
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-sm);
+      outline: none;
+      appearance: none;
+      cursor: pointer;
+      transition: border-color .2s;
+    }
+
+    .bank-select-wrap select:focus { border-color: var(--green-700); }
+
+    .bank-select-wrap::after {
+      content: '';
+      position: absolute;
+      right: 12px; top: 50%;
+      transform: translateY(-50%);
+      width: 0; height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 5px solid var(--gray-500);
+      pointer-events: none;
+    }
+
+    /* Drop zone */
+    .drop-zone {
+      border: 2px dashed var(--gray-300);
+      border-radius: var(--radius-sm);
+      padding: 24px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      background: var(--gray-100);
+      position: relative;
+    }
+
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--green-700);
+      background: var(--green-50);
+    }
+
+    .drop-zone input[type=file] {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .dz-icon {
+      margin: 0 auto 8px;
+      width: 32px; height: 32px;
+      color: var(--gray-500);
+    }
+
+    .dz-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray-700);
+    }
+
+    .dz-sub {
+      font-size: 11px;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+
+    /* File chip (after selection) */
+    .file-chip {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: var(--green-100);
+      border: 1px solid var(--green-400);
+      border-radius: var(--radius-sm);
+    }
+
+    .file-chip.visible { display: flex; }
+
+    .chip-icon { color: var(--green-700); flex-shrink: 0; }
+
+    .chip-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--green-700);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .chip-remove {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--green-400);
+      font-size: 18px;
+      line-height: 1;
+      padding: 0 2px;
+      transition: color .15s;
+    }
+    .chip-remove:hover { color: var(--red-600); }
+
+    /* ── ACTION BUTTON ── */
+    .action-wrap {
+      padding: 0 28px 28px;
+    }
+
+    .btn-process {
+      width: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 24px;
-    }
-
-    .card {
-      background: #fff;
-      border-radius: 14px;
-      padding: 40px 48px;
-      width: 100%;
-      max-width: 560px;
-      box-shadow: 0 4px 28px rgba(27,107,90,0.10);
-    }
-
-    h1 { color: #1B6B5A; font-size: 22px; margin-bottom: 4px; }
-    .subtitle { color: #7aada4; font-size: 13px; margin-bottom: 28px; }
-
-    .file-group {
-      border: 1px solid #d9eeea;
-      border-radius: 10px;
-      padding: 14px 16px;
-      margin-bottom: 14px;
-      background: #f7fcfb;
-    }
-
-    .file-group label {
-      display: block;
-      font-size: 11px;
-      font-weight: 700;
-      color: #1B6B5A;
-      letter-spacing: .5px;
-      margin-bottom: 8px;
-      text-transform: uppercase;
-    }
-
-    select {
-      width: 100%;
-      padding: 8px 10px;
-      border: 1.5px solid #9ecfc7;
-      border-radius: 6px;
-      background: #fff;
-      font-size: 13px;
-      color: #2c5f58;
-      margin-bottom: 8px;
-      outline: none;
-      cursor: pointer;
-    }
-    select:focus { border-color: #1B6B5A; }
-
-    input[type=file] {
-      width: 100%;
-      padding: 8px 10px;
-      border: 1.5px dashed #9ecfc7;
-      border-radius: 6px;
-      background: #fff;
-      font-size: 13px;
-      color: #3a7a71;
-      cursor: pointer;
-      outline: none;
-    }
-    input[type=file]:hover { border-color: #1B6B5A; }
-
-    .hint { font-size: 11px; color: #9ecfc7; margin-top: 6px; }
-
-    button {
-      width: 100%;
-      padding: 14px;
-      background: #1B6B5A;
-      color: #fff;
+      gap: 10px;
+      padding: 15px 28px;
+      background: var(--green-700);
+      color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: var(--radius-md);
+      font-family: 'Inter', sans-serif;
       font-size: 15px;
       font-weight: 600;
       cursor: pointer;
-      margin-top: 6px;
-      transition: background .2s;
+      transition: background .2s, transform .15s, box-shadow .2s;
+      box-shadow: 0 2px 8px rgba(27,107,90,.35);
     }
-    button:hover:not(:disabled) { background: #145247; }
-    button:disabled { background: #9ecfc7; cursor: not-allowed; }
 
-    #status {
-      margin-top: 16px;
-      padding: 12px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      line-height: 1.6;
+    .btn-process:hover:not(:disabled) {
+      background: var(--green-600);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(27,107,90,.4);
+    }
+
+    .btn-process:active:not(:disabled) { transform: translateY(0); }
+
+    .btn-process:disabled {
+      background: var(--gray-300);
+      color: var(--gray-500);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* ── RESULTS PANEL ── */
+    .results-panel {
+      margin-top: 20px;
       display: none;
-      white-space: pre-line;
     }
-    .info  { background: #e6f4f1; color: #1B6B5A;  display: block !important; }
-    .ok    { background: #e6f4f1; color: #145247;  display: block !important; font-weight: 600; }
-    .error { background: #fde8e8; color: #c0392b;  display: block !important; }
-    .warn  { background: #fff8e1; color: #7a5c00;  display: block !important; }
 
-    #lib-status {
-      font-size: 11px;
-      color: #9ecfc7;
-      text-align: center;
-      margin-top: 12px;
+    .results-panel.visible { display: block; }
+
+    /* Stat cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
     }
-    #lib-status.falhou { color: #c0392b; font-weight: 600; }
+
+    @media (max-width: 560px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+
+    .stat-card {
+      background: var(--white);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      box-shadow: var(--shadow-sm);
+      border-top: 3px solid var(--green-700);
+    }
+
+    .stat-card.entrada-card { border-top-color: #22A06B; }
+    .stat-card.saida-card   { border-top-color: #E04040; }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--gray-900);
+      letter-spacing: -.5px;
+    }
+
+    .stat-sub {
+      font-size: 12px;
+      color: var(--gray-500);
+      margin-top: 3px;
+    }
+
+    /* Log de arquivos */
+    .file-log {
+      background: var(--white);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .file-log-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-700);
+    }
+
+    .file-log-row {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      gap: 12px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 13px;
+    }
+
+    .file-log-row:last-child { border-bottom: none; }
+
+    .log-status {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .log-status.ok  { background: #DCFCE7; color: #16A34A; }
+    .log-status.err { background: var(--red-100); color: var(--red-600); }
+
+    .log-banco { font-weight: 600; color: var(--gray-900); min-width: 90px; }
+    .log-count { color: var(--gray-500); margin-left: auto; }
+    .log-msg   { color: var(--red-600); font-size: 12px; }
+
+    /* Download button */
+    .btn-download {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 15px;
+      background: white;
+      color: var(--green-700);
+      border: 2px solid var(--green-700);
+      border-radius: var(--radius-md);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .btn-download:hover {
+      background: var(--green-700);
+      color: white;
+    }
+
+    /* Spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
   </style>
 </head>
 <body>
-<div class="card">
-  <h1>Conciliação Bancária</h1>
-  <p class="subtitle">Clínica Meu Médico &mdash; Gerador de Planilha Financeira</p>
 
-  <!-- Extrato 1 -->
-  <div class="file-group">
-    <label>Extrato Bancário 1</label>
-    <select id="banco1">
-      <option value="">— Selecione o banco —</option>
-      <option value="Valori KS">Valori KS</option>
-      <option value="Valori MM">Valori MM</option>
-      <option value="Santander">Santander</option>
-    </select>
-    <input type="file" id="f1" accept=".xls,.xlsx">
+<!-- ── HEADER ─────────────────────────────────────────────────────────── -->
+<header>
+  <div class="brand">
+    <div class="brand-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-4H7v-2h4V7h2v4h4v2h-4v4z" fill="#7DDDCC"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-name">Clínica Meu Médico</div>
+    </div>
   </div>
 
-  <!-- Extrato 2 -->
-  <div class="file-group">
-    <label>Extrato Bancário 2 <span class="hint">(opcional)</span></label>
-    <select id="banco2">
-      <option value="">— Selecione o banco —</option>
-      <option value="Valori KS">Valori KS</option>
-      <option value="Valori MM">Valori MM</option>
-      <option value="Santander">Santander</option>
-    </select>
-    <input type="file" id="f2" accept=".xls,.xlsx">
+  <div class="brand-divider"></div>
+  <div class="brand-module">Conciliação Bancária</div>
+
+  <div class="header-right">
+    <span class="lib-badge" id="lib-badge">Carregando…</span>
+  </div>
+</header>
+
+<!-- ── PAGE ───────────────────────────────────────────────────────────── -->
+<div class="page">
+
+  <div class="page-title">
+    <h1>Processamento de Extratos</h1>
+    <p>Selecione até 3 extratos bancários para consolidar e gerar a planilha de fluxo de caixa.</p>
   </div>
 
-  <!-- Extrato 3 -->
-  <div class="file-group">
-    <label>Extrato Bancário 3 <span class="hint">(opcional)</span></label>
-    <select id="banco3">
-      <option value="">— Selecione o banco —</option>
-      <option value="Valori KS">Valori KS</option>
-      <option value="Valori MM">Valori MM</option>
-      <option value="Santander">Santander</option>
-    </select>
-    <input type="file" id="f3" accept=".xls,.xlsx">
-  </div>
+  <!-- Upload panel -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-header-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm4 18H6V4h7v5h5v11z" fill="#1B6B5A"/>
+          <path d="M8 14h8v2H8zm0-4h5v2H8z" fill="#1B6B5A"/>
+        </svg>
+      </div>
+      <div>
+        <h2>Extratos Bancários</h2>
+        <p>Selecione o banco e faça o upload do arquivo .XLS ou .XLSX</p>
+      </div>
+    </div>
 
-  <button id="btn" onclick="processar()">Gerar Planilha Excel</button>
-  <div id="status"></div>
-  <div id="lib-status"></div>
-</div>
+    <div class="panel-body">
+      <div class="upload-grid">
 
+        <!-- SLOT 1 -->
+        <div class="upload-card" id="card1">
+          <div class="upload-card-header">
+            <div class="slot-number">1</div>
+            <span class="slot-label">Extrato 1</span>
+          </div>
+          <div class="upload-card-body">
+            <div class="bank-select-wrap">
+              <select id="banco1" onchange="onBancoChange(1)">
+                <option value="">Selecione o banco</option>
+                <option value="Valori KS">Valori KS</option>
+                <option value="Valori MM">Valori MM</option>
+                <option value="Santander">Santander</option>
+              </select>
+            </div>
+            <div class="drop-zone" id="dz1"
+                 ondragover="dzDragOver(event,1)" ondragleave="dzDragLeave(1)" ondrop="dzDrop(event,1)">
+              <input type="file" id="f1" accept=".xls,.xlsx" onchange="onFileChange(1)">
+              <svg class="dz-icon" viewBox="0 0 24 24" fill="none">
+                <path d="M19.35 10.04A7.49 7.49 0 0012 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 000 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" fill="currentColor"/>
+              </svg>
+              <div class="dz-title">Clique ou arraste o arquivo</div>
+              <div class="dz-sub">.XLS · .XLSX</div>
+            </div>
+            <div class="file-chip" id="chip1">
+              <svg class="chip-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" fill="#1B6B5A"/>
+              </svg>
+              <span class="chip-name" id="chip1-name"></span>
+              <button class="chip-remove" onclick="clearFile(1)" title="Remover">×</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SLOT 2 -->
+        <div class="upload-card" id="card2">
+          <div class="upload-card-header">
+            <div class="slot-number">2</div>
+            <span class="slot-label">Extrato 2</span>
+            <span class="optional-tag">Opcional</span>
+          </div>
+          <div class="upload-card-body">
+            <div class="bank-select-wrap">
+              <select id="banco2" onchange="onBancoChange(2)">
+                <option value="">Selecione o banco</option>
+                <option value="Valori KS">Valori KS</option>
+                <option value="Valori MM">Valori MM</option>
+                <option value="Santander">Santander</option>
+              </select>
+            </div>
+            <div class="drop-zone" id="dz2"
+                 ondragover="dzDragOver(event,2)" ondragleave="dzDragLeave(2)" ondrop="dzDrop(event,2)">
+              <input type="file" id="f2" accept=".xls,.xlsx" onchange="onFileChange(2)">
+              <svg class="dz-icon" viewBox="0 0 24 24" fill="none">
+                <path d="M19.35 10.04A7.49 7.49 0 0012 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 000 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" fill="currentColor"/>
+              </svg>
+              <div class="dz-title">Clique ou arraste o arquivo</div>
+              <div class="dz-sub">.XLS · .XLSX</div>
+            </div>
+            <div class="file-chip" id="chip2">
+              <svg class="chip-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" fill="#1B6B5A"/>
+              </svg>
+              <span class="chip-name" id="chip2-name"></span>
+              <button class="chip-remove" onclick="clearFile(2)" title="Remover">×</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SLOT 3 -->
+        <div class="upload-card" id="card3">
+          <div class="upload-card-header">
+            <div class="slot-number">3</div>
+            <span class="slot-label">Extrato 3</span>
+            <span class="optional-tag">Opcional</span>
+          </div>
+          <div class="upload-card-body">
+            <div class="bank-select-wrap">
+              <select id="banco3" onchange="onBancoChange(3)">
+                <option value="">Selecione o banco</option>
+                <option value="Valori KS">Valori KS</option>
+                <option value="Valori MM">Valori MM</option>
+                <option value="Santander">Santander</option>
+              </select>
+            </div>
+            <div class="drop-zone" id="dz3"
+                 ondragover="dzDragOver(event,3)" ondragleave="dzDragLeave(3)" ondrop="dzDrop(event,3)">
+              <input type="file" id="f3" accept=".xls,.xlsx" onchange="onFileChange(3)">
+              <svg class="dz-icon" viewBox="0 0 24 24" fill="none">
+                <path d="M19.35 10.04A7.49 7.49 0 0012 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 000 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" fill="currentColor"/>
+              </svg>
+              <div class="dz-title">Clique ou arraste o arquivo</div>
+              <div class="dz-sub">.XLS · .XLSX</div>
+            </div>
+            <div class="file-chip" id="chip3">
+              <svg class="chip-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" fill="#1B6B5A"/>
+              </svg>
+              <span class="chip-name" id="chip3-name"></span>
+              <button class="chip-remove" onclick="clearFile(3)" title="Remover">×</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /upload-grid -->
+    </div><!-- /panel-body -->
+
+    <div class="action-wrap">
+      <button class="btn-process" id="btn" onclick="processar()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z" fill="white"/>
+        </svg>
+        Processar e Gerar Planilha Excel
+      </button>
+    </div>
+  </div><!-- /panel -->
+
+  <!-- ── RESULTS ──────────────────────────────────────────────────────── -->
+  <div class="results-panel" id="results">
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total de Lançamentos</div>
+        <div class="stat-value" id="stat-total">—</div>
+        <div class="stat-sub" id="stat-period">—</div>
+      </div>
+      <div class="stat-card entrada-card">
+        <div class="stat-label">Total Entradas</div>
+        <div class="stat-value" id="stat-entrada">—</div>
+        <div class="stat-sub" id="stat-entrada-n">—</div>
+      </div>
+      <div class="stat-card saida-card">
+        <div class="stat-label">Total Saídas</div>
+        <div class="stat-value" id="stat-saida">—</div>
+        <div class="stat-sub" id="stat-saida-n">—</div>
+      </div>
+    </div>
+
+    <!-- File log -->
+    <div class="file-log">
+      <div class="file-log-header">Resumo por Arquivo</div>
+      <div id="file-log-rows"></div>
+    </div>
+
+    <!-- Download -->
+    <button class="btn-download" id="btn-download" onclick="downloadExcel()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
+      </svg>
+      Baixar Planilha — conciliacao_bancaria.xlsx
+    </button>
+
+  </div><!-- /results -->
+
+</div><!-- /page -->
+
+<!-- ── SCRIPTS ────────────────────────────────────────────────────────── -->
 <script>
-// ─────────────────────────────────────────────────────────────────────────────
-// BIBLIOTECA EXCEL
-// ─────────────────────────────────────────────────────────────────────────────
+// ── BIBLIOTECA ────────────────────────────────────────────────────────────────
 
-function getX() {
-  return window.XLSXStyle || window.XLSX || null;
-}
+function getX() { return window.XLSXStyle || window.XLSX || null; }
 
-window.addEventListener('DOMContentLoaded', function () {
-  const libEl = document.getElementById('lib-status');
+window.addEventListener('DOMContentLoaded', () => {
+  const badge = document.getElementById('lib-badge');
   const X = getX();
   if (!X) {
-    libEl.textContent = '⚠ Biblioteca não carregou. Verifique sua conexão com a internet.';
-    libEl.className = 'falhou';
+    badge.textContent = '⚠ Biblioteca offline';
+    badge.className = 'lib-badge err';
     document.getElementById('btn').disabled = true;
   } else {
-    const nome = window.XLSXStyle ? 'xlsx-js-style (com cores)' : 'xlsx (sem cores)';
-    libEl.textContent = '✓ Biblioteca carregada: ' + nome;
+    const com = typeof XLSXStyle !== 'undefined';
+    badge.textContent = com ? '✓ Excel com cores' : '✓ Excel básico';
+    badge.className = 'lib-badge ok';
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CONSTANTES
-// ─────────────────────────────────────────────────────────────────────────────
+// ── ESTADO LOCAL ──────────────────────────────────────────────────────────────
 
-const COR = {
-  HEADER_BG : '1B6B5A',
-  HEADER_FG : 'FFFFFF',
-  ENTRADA   : 'E6F4F1',
-  SAIDA     : 'FDE8E8',
-  BORDA     : 'C5D8D4',
-};
+const state = { files: {}, excelBytes: null };
+
+// ── UI: DRAG AND DROP ─────────────────────────────────────────────────────────
+
+function dzDragOver(e, n) {
+  e.preventDefault();
+  document.getElementById('dz' + n).classList.add('drag-over');
+}
+
+function dzDragLeave(n) {
+  document.getElementById('dz' + n).classList.remove('drag-over');
+}
+
+function dzDrop(e, n) {
+  e.preventDefault();
+  dzDragLeave(n);
+  const file = e.dataTransfer.files[0];
+  if (file) setFile(n, file);
+}
+
+function onFileChange(n) {
+  const input = document.getElementById('f' + n);
+  if (input.files[0]) setFile(n, input.files[0]);
+}
+
+function onBancoChange(n) {
+  // nada extra por enquanto
+}
+
+function setFile(n, file) {
+  state.files[n] = file;
+  document.getElementById('dz' + n).style.display = 'none';
+  const chip = document.getElementById('chip' + n);
+  chip.classList.add('visible');
+  document.getElementById('chip' + n + '-name').textContent = file.name;
+  document.getElementById('card' + n).classList.add('has-file');
+}
+
+function clearFile(n) {
+  delete state.files[n];
+  document.getElementById('f' + n).value = '';
+  document.getElementById('dz' + n).style.display = '';
+  document.getElementById('chip' + n).classList.remove('visible');
+  document.getElementById('card' + n).classList.remove('has-file');
+}
+
+// ── CONSTANTES ────────────────────────────────────────────────────────────────
 
 const COLUNAS = [
   { nome: 'Data',               wch: 12 },
@@ -214,302 +813,324 @@ const COLUNAS = [
   { nome: 'Observação',         wch: 25 },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// FORMA DE PAGAMENTO
-// ─────────────────────────────────────────────────────────────────────────────
-
-// Usado para VALORI KS e VALORI MM (campo "Tipo" do extrato Sicoob)
 const SICOOB_FORMA = [
-  [/transfer.*pix|pix\s*envi/i,           'Pix Enviado'],
-  [/dep.*pix|pix\s*receb/i,               'Pix Recebido'],
-  [/tarifa.*entrada.*pix|tarifa.*pix/i,    'Tarifa PIX'],
-  [/antecipa.*receb/i,                     'Antecipação Cartão'],
-  [/liquida.*cart.*d[eé]bito/i,            'Cartão Débito'],
-  [/pagamento.*boleto|boleto/i,            'Boleto'],
-  [/dep[oó]sito/i,                         'Depósito / TED'],
-  [/tarifa/i,                              'Tarifa Bancária'],
-  [/ted|doc\b/i,                           'TED / DOC'],
+  [/transfer.*pix|pix\s*envi/i,        'Pix Enviado'],
+  [/dep.*pix|pix\s*receb/i,            'Pix Recebido'],
+  [/tarifa.*entrada.*pix|tarifa.*pix/i, 'Tarifa PIX'],
+  [/antecipa.*receb/i,                  'Antecipação Cartão'],
+  [/liquida.*cart.*d[eé]bito/i,         'Cartão Débito'],
+  [/pagamento.*boleto|boleto/i,         'Boleto'],
+  [/dep[oó]sito/i,                      'Depósito / TED'],
+  [/tarifa/i,                           'Tarifa Bancária'],
+  [/ted|doc\b/i,                        'TED / DOC'],
 ];
 
-// Usado para Santander (campo "Histórico")
 const SANTANDER_FORMA = [
-  [/pix\s*recebido/i,                      'Pix Recebido'],
-  [/pix\s*envi|tarifa avulsa envio pix/i,  'Pix Enviado'],
-  [/tarifa.*pix/i,                         'Tarifa PIX'],
-  [/pagamento cartao|getnet/i,             'Cartão Débito / Antecipação'],
-  [/antecipacao/i,                         'Antecipação Cartão'],
-  [/pagamento.*boleto|boleto/i,            'Boleto'],
-  [/darf|tributos/i,                       'DARF / Imposto'],
-  [/tarifa|tar liq/i,                      'Tarifa Bancária'],
-  [/cr cob|recebimento/i,                  'Cobrança'],
-  [/ted|doc\b/i,                           'TED / DOC'],
+  [/pix\s*recebido/i,                   'Pix Recebido'],
+  [/tarifa avulsa envio pix/i,          'Pix Enviado'],
+  [/tarifa.*pix/i,                      'Tarifa PIX'],
+  [/pagamento cartao|getnet/i,          'Cartão Débito / Antecipação'],
+  [/antecipacao/i,                      'Antecipação Cartão'],
+  [/pagamento.*boleto|boleto/i,         'Boleto'],
+  [/darf|tributos/i,                    'DARF / Imposto'],
+  [/tarifa|tar liq/i,                   'Tarifa Bancária'],
+  [/cr cob|recebimento/i,               'Cobrança'],
+  [/ted|doc\b/i,                        'TED / DOC'],
 ];
 
-function inferForma(texto, padroes) {
-  if (!texto) return 'Outros';
-  for (const [re, label] of padroes) {
-    if (re.test(texto)) return label;
-  }
+function inferForma(txt, pads) {
+  if (!txt) return 'Outros';
+  for (const [re, l] of pads) if (re.test(txt)) return l;
   return 'Outros';
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS DE DATA / NÚMERO
-// ─────────────────────────────────────────────────────────────────────────────
+// ── HELPERS ───────────────────────────────────────────────────────────────────
 
-function parseDate(val) {
-  if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
-
-  const s = String(val || '').trim();
-
-  // DD/MM/YYYY
+function parseDate(v) {
+  if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
+  const s = String(v || '').trim();
   const m1 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (m1) return new Date(+m1[3], +m1[2] - 1, +m1[1]);
-
-  // YYYY-MM-DD
+  if (m1) return new Date(+m1[3], +m1[2]-1, +m1[1]);
   const m2 = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (m2) return new Date(+m2[1], +m2[2] - 1, +m2[3]);
-
-  // Serial numérico do Excel (ex: 46127 → 31/03/2026)
-  if (typeof val === 'number' && val > 1000) {
-    return new Date(Math.round((val - 25569) * 86400000));
-  }
-
+  if (m2) return new Date(+m2[1], +m2[2]-1, +m2[3]);
+  if (typeof v === 'number' && v > 1000)
+    return new Date(Math.round((v - 25569) * 86400000));
   return null;
 }
 
-function formatDate(d) {
+function fmtDate(d) {
   if (!d) return '';
-  return [
-    String(d.getDate()).padStart(2, '0'),
-    String(d.getMonth() + 1).padStart(2, '0'),
-    d.getFullYear(),
-  ].join('/');
+  return [String(d.getDate()).padStart(2,'0'),
+          String(d.getMonth()+1).padStart(2,'0'),
+          d.getFullYear()].join('/');
 }
 
-function parseNum(val) {
-  if (val === null || val === undefined || val === '') return NaN;
-  if (typeof val === 'number') return val;
-  return parseFloat(String(val).replace(/\./g, '').replace(',', '.'));
+function parseNum(v) {
+  if (v === null || v === undefined || v === '') return NaN;
+  if (typeof v === 'number') return v;
+  return parseFloat(String(v).replace(/\./g,'').replace(',','.'));
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PARSER: VALORI KS e VALORI MM  (formato Sicoob)
-// Colunas: [0]Data  [1]Hora  [2]Tipo  [3]Descrição  [4]Valor  [5]D/C  [6]Saldo
-// Linhas "Saldo do dia" têm D/C vazio → ignorar
-// ─────────────────────────────────────────────────────────────────────────────
+function fmtBRL(n) {
+  return isNaN(n) ? '—' : 'R$ ' + n.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
 
-function parseSicoob(rows, bancoLabel) {
-  const result = [];
-  if (!rows.length) return result;
+// ── PARSERS ───────────────────────────────────────────────────────────────────
 
-  // Encontra coluna D/C dinamicamente
-  const header = rows[0].map(h => String(h || '').trim());
+function parseSicoob(rows, banco) {
+  const header = rows[0].map(h => String(h||'').trim());
   const dcIdx  = header.findIndex(h => h === 'D/C');
-  if (dcIdx < 0) throw new Error('Coluna D/C não encontrada. Verifique o arquivo.');
-
+  if (dcIdx < 0) throw new Error('Coluna D/C não encontrada.');
+  const result = [];
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
-    const dc  = String(row[dcIdx] || '').trim();
-    if (!dc) continue; // "Saldo do dia" — ignorar
-
+    const dc  = String(row[dcIdx]||'').trim();
+    if (!dc) continue;
     const data  = parseDate(row[0]);
     const valor = Math.abs(parseNum(row[4]));
     if (!data || isNaN(valor)) continue;
-
     result.push({
       data,
-      descricao       : String(row[3] || '').trim(),
+      descricao       : String(row[3]||'').trim(),
       tipo            : dc === 'C' ? 'Entrada' : 'Saída',
       valor,
       saldo           : parseNum(row[6]),
-      banco_origem    : bancoLabel,
-      forma_pagamento : inferForma(String(row[2] || ''), SICOOB_FORMA),
-      categoria       : '',
-      apuracao        : '',
-      observacao      : '',
+      banco_origem    : banco,
+      forma_pagamento : inferForma(String(row[2]||''), SICOOB_FORMA),
+      categoria:'', apuracao:'', observacao:'',
     });
   }
   return result;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PARSER: SANTANDER
-// Linha 0: AGENCIA/CONTA (metadado)
-// Linha 1: vazia
-// Linha 2: cabeçalho real (Data, Histórico, Documento, Valor, Saldo)
-// Linha 3+: dados
-// Valor negativo = Saída, positivo = Entrada
-// ─────────────────────────────────────────────────────────────────────────────
-
-function parseSantander(rows, bancoLabel) {
+function parseSantander(rows, banco) {
   const result = [];
-  // Dados começam na linha 3 (índice 3)
   for (let i = 3; i < rows.length; i++) {
     const row = rows[i];
     if (!row || !row[0]) continue;
-
-    const data = parseDate(row[0]);
-    if (!data) continue;
-
+    const data     = parseDate(row[0]);
     const valorRaw = parseNum(row[3]);
-    if (isNaN(valorRaw)) continue;
-
+    if (!data || isNaN(valorRaw)) continue;
     result.push({
       data,
-      descricao       : String(row[1] || '').trim(),
+      descricao       : String(row[1]||'').trim(),
       tipo            : valorRaw >= 0 ? 'Entrada' : 'Saída',
       valor           : Math.abs(valorRaw),
       saldo           : parseNum(row[4]),
-      banco_origem    : bancoLabel,
-      forma_pagamento : inferForma(String(row[1] || ''), SANTANDER_FORMA),
-      categoria       : '',
-      apuracao        : '',
-      observacao      : '',
+      banco_origem    : banco,
+      forma_pagamento : inferForma(String(row[1]||''), SANTANDER_FORMA),
+      categoria:'', apuracao:'', observacao:'',
     });
   }
   return result;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DETECÇÃO AUTOMÁTICA DE FORMATO
-// ─────────────────────────────────────────────────────────────────────────────
-
-function detectAndParse(workbook, bancoLabel) {
-  const X     = getX();
-  const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  const rows  = X.utils.sheet_to_json(sheet, {
-    header   : 1,
-    defval   : '',
-    raw      : true,
-    cellDates: true,
+function detectAndParse(wb, banco) {
+  const X    = getX();
+  const rows = X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {
+    header:1, defval:'', raw:true, cellDates:true
   });
-
   if (!rows.length) throw new Error('Arquivo sem dados.');
-
-  const primeiraCelula = String(rows[0][0] || '').trim().toUpperCase();
-
-  // Santander: primeira célula é "AGENCIA"
-  if (primeiraCelula === 'AGENCIA') {
-    return parseSantander(rows, bancoLabel);
-  }
-
-  // Sicoob (Valori KS / MM): tem coluna "D/C"
-  const header = rows[0].map(h => String(h || '').trim());
-  if (header.includes('D/C')) {
-    return parseSicoob(rows, bancoLabel);
-  }
-
-  throw new Error('Formato de extrato não reconhecido. Confirme o banco selecionado.');
+  const first = String(rows[0][0]||'').trim().toUpperCase();
+  if (first === 'AGENCIA') return parseSantander(rows, banco);
+  if (rows[0].map(h=>String(h).trim()).includes('D/C')) return parseSicoob(rows, banco);
+  throw new Error('Formato não reconhecido.');
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PIPELINE: MERGE + ORDENAÇÃO + DUPLICATAS
-// ─────────────────────────────────────────────────────────────────────────────
+// ── PIPELINE ──────────────────────────────────────────────────────────────────
 
 function pipeline(todos) {
-  // Ordena por data decrescente (mais recente primeiro)
-  todos.sort((a, b) => b.data - a.data);
-
-  // Marca duplicatas: mesmo banco + data + valor + início da descrição
-  const visto = new Set();
-  for (const row of todos) {
-    const chave = [
-      row.banco_origem.toUpperCase(),
-      formatDate(row.data),
-      row.valor.toFixed(2),
-      row.descricao.slice(0, 30).toUpperCase().trim(),
-    ].join('|');
-
-    if (visto.has(chave)) {
-      row.observacao = 'Possível duplicata';
-    } else {
-      visto.add(chave);
-    }
+  todos.sort((a,b) => b.data - a.data);
+  const seen = new Set();
+  for (const r of todos) {
+    const k = [r.banco_origem.toUpperCase(), fmtDate(r.data),
+                r.valor.toFixed(2), r.descricao.slice(0,30).toUpperCase()].join('|');
+    if (seen.has(k)) r.observacao = 'Possível duplicata';
+    else seen.add(k);
   }
-
   return todos;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GERAÇÃO DO EXCEL
-// ─────────────────────────────────────────────────────────────────────────────
+// ── GERAR EXCEL ───────────────────────────────────────────────────────────────
 
 function gerarExcel(linhas) {
-  const X        = getX();
-  const comEstilo = typeof XLSXStyle !== 'undefined';
-  const wb = X.utils.book_new();
-  const ws = {};
+  const X   = getX();
+  const com = typeof XLSXStyle !== 'undefined';
+  const wb  = X.utils.book_new();
+  const ws  = {};
 
-  function bordaCell() {
-    if (!comEstilo) return {};
-    const lado = { style: 'thin', color: { rgb: COR.BORDA } };
-    return { border: { top: lado, bottom: lado, left: lado, right: lado } };
-  }
+  const borda = com ? (() => {
+    const l = {style:'thin', color:{rgb:'C5D8D4'}};
+    return {border:{top:l,bottom:l,left:l,right:l}};
+  })() : {};
 
-  // Cabeçalho
-  COLUNAS.forEach(({ nome }, c) => {
-    const ref = X.utils.encode_cell({ r: 0, c });
-    ws[ref] = {
-      v: nome,
-      t: 's',
-      s: comEstilo ? {
-        fill      : { patternType: 'solid', fgColor: { rgb: COR.HEADER_BG } },
-        font      : { bold: true, color: { rgb: COR.HEADER_FG }, name: 'Calibri', sz: 11 },
-        alignment : { horizontal: 'center', vertical: 'center' },
-        ...bordaCell(),
+  COLUNAS.forEach(({nome},c) => {
+    ws[X.utils.encode_cell({r:0,c})] = {
+      v:nome, t:'s',
+      s: com ? {
+        fill:{patternType:'solid',fgColor:{rgb:'1B6B5A'}},
+        font:{bold:true,color:{rgb:'FFFFFF'},name:'Calibri',sz:11},
+        alignment:{horizontal:'center',vertical:'center'},
+        ...borda
       } : undefined,
     };
   });
 
-  // Dados
-  linhas.forEach((row, r) => {
-    const bgRgb = row.tipo === 'Entrada' ? COR.ENTRADA : COR.SAIDA;
-
-    const valores = [
-      formatDate(row.data),
-      row.descricao,
-      row.tipo,
-      isNaN(row.valor) ? '' : row.valor,
-      isNaN(row.saldo) ? '' : row.saldo,
-      row.banco_origem,
-      row.forma_pagamento,
-      row.categoria,
-      row.apuracao,
-      row.observacao,
+  linhas.forEach((row,r) => {
+    const bg = row.tipo==='Entrada'?'E6F4F1':'FDE8E8';
+    const vals = [
+      fmtDate(row.data), row.descricao, row.tipo,
+      isNaN(row.valor)?'':row.valor,
+      isNaN(row.saldo)?'':row.saldo,
+      row.banco_origem, row.forma_pagamento,
+      row.categoria, row.apuracao, row.observacao,
     ];
-
-    valores.forEach((v, c) => {
-      const isNum = (c === 3 || c === 4) && typeof v === 'number';
-      const ref   = X.utils.encode_cell({ r: r + 1, c });
-      const cell  = {
-        v: (v === null || v === undefined) ? '' : v,
-        t: isNum ? 'n' : 's',
-        s: comEstilo ? {
-          fill      : { patternType: 'solid', fgColor: { rgb: bgRgb } },
-          font      : { name: 'Calibri', sz: 10 },
-          alignment : { vertical: 'center', horizontal: isNum ? 'right' : 'left' },
-          ...bordaCell(),
+    vals.forEach((v,c) => {
+      const isN = (c===3||c===4) && typeof v==='number';
+      const cell = {
+        v: v??'',
+        t: isN?'n':'s',
+        s: com ? {
+          fill:{patternType:'solid',fgColor:{rgb:bg}},
+          font:{name:'Calibri',sz:10},
+          alignment:{vertical:'center',horizontal:isN?'right':'left'},
+          ...borda
         } : undefined,
       };
-      if (isNum) cell.z = 'R$ #,##0.00';
-      ws[ref] = cell;
+      if (isN) cell.z = 'R$ #,##0.00';
+      ws[X.utils.encode_cell({r:r+1,c})] = cell;
     });
   });
 
-  const totalRows = linhas.length;
-  ws['!ref']        = X.utils.encode_range({ s:{r:0,c:0}, e:{r:totalRows, c:COLUNAS.length-1} });
-  ws['!cols']       = COLUNAS.map(({ wch }) => ({ wch }));
-  ws['!autofilter'] = { ref: X.utils.encode_range({ s:{r:0,c:0}, e:{r:0,c:COLUNAS.length-1} }) };
-  ws['!freeze']     = { xSplit: 0, ySplit: 1 };
+  ws['!ref']        = X.utils.encode_range({s:{r:0,c:0},e:{r:linhas.length,c:COLUNAS.length-1}});
+  ws['!cols']       = COLUNAS.map(({wch})=>({wch}));
+  ws['!autofilter'] = {ref: X.utils.encode_range({s:{r:0,c:0},e:{r:0,c:COLUNAS.length-1}})};
+  ws['!freeze']     = {xSplit:0,ySplit:1};
 
   X.utils.book_append_sheet(wb, ws, 'Conciliação');
-  return X.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: comEstilo });
+  return X.write(wb, {bookType:'xlsx', type:'array', cellStyles:com});
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// LEITURA DO ARQUIVO
-// ─────────────────────────────────────────────────────────────────────────────
+// ── DOWNLOAD ──────────────────────────────────────────────────────────────────
+
+function downloadExcel() {
+  if (!state.excelBytes) return;
+  const blob = new Blob([state.excelBytes], {
+    type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  });
+  const a = Object.assign(document.createElement('a'),
+    {href:URL.createObjectURL(blob), download:'conciliacao_bancaria.xlsx'});
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ── RESULTS UI ────────────────────────────────────────────────────────────────
+
+function mostrarResultados(resultado, log) {
+  const entradas = resultado.filter(r=>r.tipo==='Entrada');
+  const saidas   = resultado.filter(r=>r.tipo==='Saída');
+  const sumE = entradas.reduce((s,r)=>s+r.valor,0);
+  const sumS = saidas.reduce((s,r)=>s+r.valor,0);
+
+  const datas = resultado.map(r=>r.data).filter(Boolean);
+  const dMin  = fmtDate(new Date(Math.min(...datas)));
+  const dMax  = fmtDate(new Date(Math.max(...datas)));
+
+  document.getElementById('stat-total').textContent   = resultado.length.toLocaleString('pt-BR');
+  document.getElementById('stat-period').textContent  = dMin + ' até ' + dMax;
+  document.getElementById('stat-entrada').textContent = fmtBRL(sumE);
+  document.getElementById('stat-entrada-n').textContent = entradas.length + ' transações';
+  document.getElementById('stat-saida').textContent   = fmtBRL(sumS);
+  document.getElementById('stat-saida-n').textContent = saidas.length + ' transações';
+
+  const logWrap = document.getElementById('file-log-rows');
+  logWrap.innerHTML = '';
+  for (const {banco, count, err} of log) {
+    const row = document.createElement('div');
+    row.className = 'file-log-row';
+    if (err) {
+      row.innerHTML = `
+        <div class="log-status err"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></div>
+        <span class="log-banco">${banco}</span>
+        <span class="log-msg">${err}</span>`;
+    } else {
+      row.innerHTML = `
+        <div class="log-status ok"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
+        <span class="log-banco">${banco}</span>
+        <span style="font-size:13px;color:#374151">${count} lançamentos</span>
+        <span class="log-count">${resultado.filter(r=>r.banco_origem===banco).length > 0 ? '' : ''}</span>`;
+    }
+    logWrap.appendChild(row);
+  }
+
+  document.getElementById('results').classList.add('visible');
+  document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ── MAIN ─────────────────────────────────────────────────────────────────────
+
+async function processar() {
+  const btn = document.getElementById('btn');
+
+  const slots = [1,2,3].map(n => ({
+    n, file: state.files[n], banco: document.getElementById('banco'+n).value
+  })).filter(s => s.file);
+
+  if (!slots.length) {
+    alert('Selecione ao menos um arquivo de extrato.');
+    return;
+  }
+
+  const semBanco = slots.filter(s => !s.banco);
+  if (semBanco.length) {
+    alert('Selecione o banco para todos os arquivos carregados.');
+    return;
+  }
+
+  if (!getX()) {
+    alert('Biblioteca não carregada. Verifique sua conexão e recarregue a página.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Processando…';
+
+  try {
+    const todos = [];
+    const log   = [];
+
+    for (const {file, banco} of slots) {
+      try {
+        const wb   = await lerArquivo(file);
+        const rows = detectAndParse(wb, banco);
+        if (!rows.length) throw new Error('Nenhuma transação encontrada.');
+        todos.push(...rows);
+        log.push({banco, count: rows.length});
+      } catch(e) {
+        log.push({banco: banco || file.name, count:0, err: e.message});
+      }
+    }
+
+    if (!todos.length) {
+      alert('Nenhum dado válido foi processado. Verifique os arquivos e os bancos selecionados.');
+      return;
+    }
+
+    const resultado   = pipeline(todos);
+    state.excelBytes  = gerarExcel(resultado);
+
+    mostrarResultados(resultado, log);
+    downloadExcel();
+
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z" fill="white"/>
+      </svg>
+      Processar e Gerar Planilha Excel`;
+  }
+}
 
 function lerArquivo(file) {
   return new Promise((resolve, reject) => {
@@ -517,109 +1138,12 @@ function lerArquivo(file) {
     reader.onload = e => {
       try {
         const X  = getX();
-        const wb = X.read(new Uint8Array(e.target.result), {
-          type     : 'array',
-          cellDates: true,
-        });
-        resolve(wb);
-      } catch (err) {
-        reject(new Error('Falha ao interpretar o arquivo: ' + err.message));
-      }
+        resolve(X.read(new Uint8Array(e.target.result), {type:'array', cellDates:true}));
+      } catch(err) { reject(new Error('Falha ao ler: ' + err.message)); }
     };
-    reader.onerror = () => reject(new Error('Falha ao ler o arquivo.'));
+    reader.onerror = () => reject(new Error('Erro ao ler o arquivo.'));
     reader.readAsArrayBuffer(file);
   });
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MAIN
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function processar() {
-  const btn    = document.getElementById('btn');
-  const status = document.getElementById('status');
-
-  const slots = [
-    { file: document.getElementById('f1').files[0], banco: document.getElementById('banco1').value },
-    { file: document.getElementById('f2').files[0], banco: document.getElementById('banco2').value },
-    { file: document.getElementById('f3').files[0], banco: document.getElementById('banco3').value },
-  ].filter(s => s.file);
-
-  // Validações
-  if (!slots.length) {
-    status.className   = 'error';
-    status.textContent = 'Selecione ao menos um arquivo de extrato.';
-    return;
-  }
-  const semBanco = slots.filter(s => !s.banco);
-  if (semBanco.length) {
-    status.className   = 'error';
-    status.textContent = `Selecione o banco para: ${semBanco.map(s => s.file.name).join(', ')}`;
-    return;
-  }
-  if (!getX()) {
-    status.className   = 'error';
-    status.textContent = 'Biblioteca não carregada. Verifique sua conexão e recarregue a página.';
-    return;
-  }
-
-  btn.disabled       = true;
-  btn.textContent    = 'Processando…';
-  status.className   = 'info';
-  status.textContent = `Lendo ${slots.length} arquivo(s)…`;
-
-  try {
-    const todos = [];
-    const log   = [];
-
-    for (const { file, banco } of slots) {
-      try {
-        const wb   = await lerArquivo(file);
-        const rows = detectAndParse(wb, banco);
-        if (!rows.length) throw new Error('Nenhuma transação encontrada.');
-        todos.push(...rows);
-        log.push(`✓ ${banco} — ${rows.length} lançamentos`);
-      } catch (e) {
-        log.push(`✗ ${file.name}: ${e.message}`);
-      }
-    }
-
-    status.textContent = log.join('\n');
-
-    if (!todos.length) {
-      status.className = 'error';
-      return;
-    }
-
-    status.className   = 'info';
-    status.textContent = log.join('\n') + '\n\nConsolidando e gerando planilha…';
-
-    const resultado = pipeline(todos);
-    const bytes     = gerarExcel(resultado);
-
-    const blob = new Blob([bytes], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    });
-    const url = URL.createObjectURL(blob);
-    const a   = document.createElement('a');
-    a.href    = url;
-    a.download = 'conciliacao_bancaria.xlsx';
-    a.click();
-    URL.revokeObjectURL(url);
-
-    const dups    = resultado.filter(r => r.observacao === 'Possível duplicata').length;
-    const avisoD  = dups ? `\n⚠ ${dups} possíveis duplicatas sinalizadas na coluna Observação.` : '';
-    status.className   = 'ok';
-    status.textContent = log.join('\n') +
-      `\n\n✓ Planilha gerada com ${resultado.length} lançamentos. Download iniciado.${avisoD}`;
-
-  } catch (e) {
-    status.className   = 'error';
-    status.textContent = 'Erro: ' + e.message;
-  } finally {
-    btn.disabled    = false;
-    btn.textContent = 'Gerar Planilha Excel';
-  }
 }
 </script>
 </body>
