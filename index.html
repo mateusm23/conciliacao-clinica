@@ -4,7 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Conciliação Bancária — Clínica Meu Médico</title>
+
+  <!-- Biblioteca de leitura/escrita Excel (3 fontes em cascata) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx-js-style.min.js"></script>
+  <script>if(typeof XLSXStyle==='undefined')document.write('<scr'+'ipt src="https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx-js-style.min.js"><\/scr'+'ipt>')</script>
+  <script>if(typeof XLSXStyle==='undefined'&&typeof XLSX==='undefined')document.write('<scr'+'ipt src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"><\/scr'+'ipt>')</script>
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -23,29 +28,59 @@
       border-radius: 14px;
       padding: 40px 48px;
       width: 100%;
-      max-width: 520px;
+      max-width: 560px;
       box-shadow: 0 4px 28px rgba(27,107,90,0.10);
     }
 
     h1 { color: #1B6B5A; font-size: 22px; margin-bottom: 4px; }
-    .subtitle { color: #7aada4; font-size: 13px; margin-bottom: 32px; }
+    .subtitle { color: #7aada4; font-size: 13px; margin-bottom: 28px; }
 
-    .file-group { margin-bottom: 16px; }
-    label { display: block; font-size: 12px; font-weight: 600; color: #2c5f58; margin-bottom: 6px; letter-spacing: .3px; }
+    .file-group {
+      border: 1px solid #d9eeea;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      background: #f7fcfb;
+    }
+
+    .file-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #1B6B5A;
+      letter-spacing: .5px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1.5px solid #9ecfc7;
+      border-radius: 6px;
+      background: #fff;
+      font-size: 13px;
+      color: #2c5f58;
+      margin-bottom: 8px;
+      outline: none;
+      cursor: pointer;
+    }
+    select:focus { border-color: #1B6B5A; }
 
     input[type=file] {
       width: 100%;
-      padding: 10px 12px;
+      padding: 8px 10px;
       border: 1.5px dashed #9ecfc7;
-      border-radius: 8px;
-      background: #f7fcfb;
+      border-radius: 6px;
+      background: #fff;
       font-size: 13px;
       color: #3a7a71;
       cursor: pointer;
       outline: none;
-      transition: border-color .2s;
     }
     input[type=file]:hover { border-color: #1B6B5A; }
+
+    .hint { font-size: 11px; color: #9ecfc7; margin-top: 6px; }
 
     button {
       width: 100%;
@@ -57,23 +92,33 @@
       font-size: 15px;
       font-weight: 600;
       cursor: pointer;
-      margin-top: 8px;
+      margin-top: 6px;
       transition: background .2s;
     }
     button:hover:not(:disabled) { background: #145247; }
     button:disabled { background: #9ecfc7; cursor: not-allowed; }
 
     #status {
-      margin-top: 18px;
+      margin-top: 16px;
       padding: 12px 16px;
       border-radius: 8px;
       font-size: 13px;
-      line-height: 1.5;
+      line-height: 1.6;
       display: none;
+      white-space: pre-line;
     }
-    .info  { background: #e6f4f1; color: #1B6B5A; display: block !important; }
-    .error { background: #fde8e8; color: #c0392b; display: block !important; }
-    .ok    { background: #e6f4f1; color: #1B6B5A; display: block !important; font-weight: 600; }
+    .info  { background: #e6f4f1; color: #1B6B5A;  display: block !important; }
+    .ok    { background: #e6f4f1; color: #145247;  display: block !important; font-weight: 600; }
+    .error { background: #fde8e8; color: #c0392b;  display: block !important; }
+    .warn  { background: #fff8e1; color: #7a5c00;  display: block !important; }
+
+    #lib-status {
+      font-size: 11px;
+      color: #9ecfc7;
+      text-align: center;
+      margin-top: 12px;
+    }
+    #lib-status.falhou { color: #c0392b; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -81,25 +126,72 @@
   <h1>Conciliação Bancária</h1>
   <p class="subtitle">Clínica Meu Médico &mdash; Gerador de Planilha Financeira</p>
 
+  <!-- Extrato 1 -->
   <div class="file-group">
-    <label>EXTRATO BANCÁRIO 1</label>
+    <label>Extrato Bancário 1</label>
+    <select id="banco1">
+      <option value="">— Selecione o banco —</option>
+      <option value="Valori KS">Valori KS</option>
+      <option value="Valori MM">Valori MM</option>
+      <option value="Santander">Santander</option>
+    </select>
     <input type="file" id="f1" accept=".xls,.xlsx">
   </div>
+
+  <!-- Extrato 2 -->
   <div class="file-group">
-    <label>EXTRATO BANCÁRIO 2</label>
+    <label>Extrato Bancário 2 <span class="hint">(opcional)</span></label>
+    <select id="banco2">
+      <option value="">— Selecione o banco —</option>
+      <option value="Valori KS">Valori KS</option>
+      <option value="Valori MM">Valori MM</option>
+      <option value="Santander">Santander</option>
+    </select>
     <input type="file" id="f2" accept=".xls,.xlsx">
   </div>
+
+  <!-- Extrato 3 -->
   <div class="file-group">
-    <label>EXTRATO BANCÁRIO 3</label>
+    <label>Extrato Bancário 3 <span class="hint">(opcional)</span></label>
+    <select id="banco3">
+      <option value="">— Selecione o banco —</option>
+      <option value="Valori KS">Valori KS</option>
+      <option value="Valori MM">Valori MM</option>
+      <option value="Santander">Santander</option>
+    </select>
     <input type="file" id="f3" accept=".xls,.xlsx">
   </div>
 
   <button id="btn" onclick="processar()">Gerar Planilha Excel</button>
   <div id="status"></div>
+  <div id="lib-status"></div>
 </div>
 
 <script>
-// ─── CONSTANTES DE ESTILO ────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// BIBLIOTECA EXCEL
+// ─────────────────────────────────────────────────────────────────────────────
+
+function getX() {
+  return window.XLSXStyle || window.XLSX || null;
+}
+
+window.addEventListener('DOMContentLoaded', function () {
+  const libEl = document.getElementById('lib-status');
+  const X = getX();
+  if (!X) {
+    libEl.textContent = '⚠ Biblioteca não carregou. Verifique sua conexão com a internet.';
+    libEl.className = 'falhou';
+    document.getElementById('btn').disabled = true;
+  } else {
+    const nome = window.XLSXStyle ? 'xlsx-js-style (com cores)' : 'xlsx (sem cores)';
+    libEl.textContent = '✓ Biblioteca carregada: ' + nome;
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSTANTES
+// ─────────────────────────────────────────────────────────────────────────────
 
 const COR = {
   HEADER_BG : '1B6B5A',
@@ -115,63 +207,72 @@ const COLUNAS = [
   { nome: 'Tipo',               wch: 11 },
   { nome: 'Valor (R$)',         wch: 15 },
   { nome: 'Saldo (R$)',         wch: 15 },
-  { nome: 'Banco / Origem',     wch: 22 },
-  { nome: 'Forma de Pagamento', wch: 22 },
+  { nome: 'Banco / Origem',     wch: 18 },
+  { nome: 'Forma de Pagamento', wch: 24 },
   { nome: 'Categoria',          wch: 18 },
   { nome: 'Apuração',           wch: 15 },
   { nome: 'Observação',         wch: 25 },
 ];
 
-// ─── FORMA DE PAGAMENTO ───────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// FORMA DE PAGAMENTO
+// ─────────────────────────────────────────────────────────────────────────────
 
+// Usado para VALORI KS e VALORI MM (campo "Tipo" do extrato Sicoob)
 const SICOOB_FORMA = [
-  [/transfer.*pix|pix\s*envi/i,            'Pix'],
-  [/dep.*pix|pix\s*receb/i,                'Pix'],
-  [/tarifa.*entrada.*pix|tarifa.*pix/i,     'Tarifa PIX'],
-  [/antecipa.*receb|antecipa/i,             'Antecipação Cartão'],
-  [/liquida.*cart.*d[eé]bito/i,             'Cartão Débito'],
-  [/pagamento.*boleto|boleto/i,             'Boleto'],
-  [/dep[oó]sito/i,                          'Depósito / TED'],
-  [/tarifa/i,                               'Tarifa Bancária'],
-  [/ted|doc\b/i,                            'TED / DOC'],
+  [/transfer.*pix|pix\s*envi/i,           'Pix Enviado'],
+  [/dep.*pix|pix\s*receb/i,               'Pix Recebido'],
+  [/tarifa.*entrada.*pix|tarifa.*pix/i,    'Tarifa PIX'],
+  [/antecipa.*receb/i,                     'Antecipação Cartão'],
+  [/liquida.*cart.*d[eé]bito/i,            'Cartão Débito'],
+  [/pagamento.*boleto|boleto/i,            'Boleto'],
+  [/dep[oó]sito/i,                         'Depósito / TED'],
+  [/tarifa/i,                              'Tarifa Bancária'],
+  [/ted|doc\b/i,                           'TED / DOC'],
 ];
 
+// Usado para Santander (campo "Histórico")
 const SANTANDER_FORMA = [
-  [/pix\s*recebido|pix\s*envi|transfer.*pix|dep.*pix/i, 'Pix'],
-  [/tarifa.*pix|tarifa avulsa envio pix/i,              'Tarifa PIX'],
-  [/pagamento cartao|getnet|antecipacao getnet/i,        'Cartão Débito / Antecipação'],
-  [/pagamento.*boleto|boleto/i,                          'Boleto'],
-  [/darf|tributos/i,                                     'DARF / Imposto'],
-  [/tarifa|tar liq/i,                                    'Tarifa Bancária'],
-  [/cr cob|recebimento/i,                                'Cobrança / Recebimento'],
-  [/ted|doc\b/i,                                         'TED / DOC'],
+  [/pix\s*recebido/i,                      'Pix Recebido'],
+  [/pix\s*envi|tarifa avulsa envio pix/i,  'Pix Enviado'],
+  [/tarifa.*pix/i,                         'Tarifa PIX'],
+  [/pagamento cartao|getnet/i,             'Cartão Débito / Antecipação'],
+  [/antecipacao/i,                         'Antecipação Cartão'],
+  [/pagamento.*boleto|boleto/i,            'Boleto'],
+  [/darf|tributos/i,                       'DARF / Imposto'],
+  [/tarifa|tar liq/i,                      'Tarifa Bancária'],
+  [/cr cob|recebimento/i,                  'Cobrança'],
+  [/ted|doc\b/i,                           'TED / DOC'],
 ];
 
-function inferForma(desc, patterns) {
-  if (!desc) return 'Outros';
-  for (const [re, label] of patterns) {
-    if (re.test(desc)) return label;
+function inferForma(texto, padroes) {
+  if (!texto) return 'Outros';
+  for (const [re, label] of padroes) {
+    if (re.test(texto)) return label;
   }
   return 'Outros';
 }
 
-// ─── HELPERS DE DATA E NÚMERO ─────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS DE DATA / NÚMERO
+// ─────────────────────────────────────────────────────────────────────────────
 
 function parseDate(val) {
-  if (!val && val !== 0) return null;
-  if (val instanceof Date) return isNaN(val) ? null : val;
+  if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
 
-  // "DD/MM/YYYY"
-  const m1 = String(val).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  const s = String(val || '').trim();
+
+  // DD/MM/YYYY
+  const m1 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (m1) return new Date(+m1[3], +m1[2] - 1, +m1[1]);
 
-  // "YYYY-MM-DD"
-  const m2 = String(val).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  // YYYY-MM-DD
+  const m2 = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (m2) return new Date(+m2[1], +m2[2] - 1, +m2[3]);
 
-  // Excel serial (número)
-  if (typeof val === 'number' && val > 0) {
-    return new Date(Math.round((val - 25569) * 86400 * 1000));
+  // Serial numérico do Excel (ex: 46127 → 31/03/2026)
+  if (typeof val === 'number' && val > 1000) {
+    return new Date(Math.round((val - 25569) * 86400000));
   }
 
   return null;
@@ -180,32 +281,37 @@ function parseDate(val) {
 function formatDate(d) {
   if (!d) return '';
   return [
-    String(d.getDate()).padStart(2,'0'),
-    String(d.getMonth()+1).padStart(2,'0'),
-    d.getFullYear()
+    String(d.getDate()).padStart(2, '0'),
+    String(d.getMonth() + 1).padStart(2, '0'),
+    d.getFullYear(),
   ].join('/');
 }
 
 function parseNum(val) {
   if (val === null || val === undefined || val === '') return NaN;
   if (typeof val === 'number') return val;
-  return parseFloat(String(val).replace(/\./g,'').replace(',','.'));
+  return parseFloat(String(val).replace(/\./g, '').replace(',', '.'));
 }
 
-// ─── PARSERS ──────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// PARSER: VALORI KS e VALORI MM  (formato Sicoob)
+// Colunas: [0]Data  [1]Hora  [2]Tipo  [3]Descrição  [4]Valor  [5]D/C  [6]Saldo
+// Linhas "Saldo do dia" têm D/C vazio → ignorar
+// ─────────────────────────────────────────────────────────────────────────────
 
-function parseSicoob(rows, filename) {
+function parseSicoob(rows, bancoLabel) {
   const result = [];
   if (!rows.length) return result;
 
+  // Encontra coluna D/C dinamicamente
   const header = rows[0].map(h => String(h || '').trim());
   const dcIdx  = header.findIndex(h => h === 'D/C');
-  if (dcIdx < 0) return result;
+  if (dcIdx < 0) throw new Error('Coluna D/C não encontrada. Verifique o arquivo.');
 
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
     const dc  = String(row[dcIdx] || '').trim();
-    if (!dc) continue; // linha "Saldo do dia"
+    if (!dc) continue; // "Saldo do dia" — ignorar
 
     const data  = parseDate(row[0]);
     const valor = Math.abs(parseNum(row[4]));
@@ -217,7 +323,7 @@ function parseSicoob(rows, filename) {
       tipo            : dc === 'C' ? 'Entrada' : 'Saída',
       valor,
       saldo           : parseNum(row[6]),
-      banco_origem    : String(filename).replace(/\.(xls|xlsx)$/i, ''),
+      banco_origem    : bancoLabel,
       forma_pagamento : inferForma(String(row[2] || ''), SICOOB_FORMA),
       categoria       : '',
       apuracao        : '',
@@ -227,11 +333,22 @@ function parseSicoob(rows, filename) {
   return result;
 }
 
-function parseSantander(rows) {
+// ─────────────────────────────────────────────────────────────────────────────
+// PARSER: SANTANDER
+// Linha 0: AGENCIA/CONTA (metadado)
+// Linha 1: vazia
+// Linha 2: cabeçalho real (Data, Histórico, Documento, Valor, Saldo)
+// Linha 3+: dados
+// Valor negativo = Saída, positivo = Entrada
+// ─────────────────────────────────────────────────────────────────────────────
+
+function parseSantander(rows, bancoLabel) {
   const result = [];
-  // rows[0]=AGENCIA, rows[1]=vazio, rows[2]=cabeçalho, rows[3+]=dados
+  // Dados começam na linha 3 (índice 3)
   for (let i = 3; i < rows.length; i++) {
-    const row  = rows[i];
+    const row = rows[i];
+    if (!row || !row[0]) continue;
+
     const data = parseDate(row[0]);
     if (!data) continue;
 
@@ -244,7 +361,7 @@ function parseSantander(rows) {
       tipo            : valorRaw >= 0 ? 'Entrada' : 'Saída',
       valor           : Math.abs(valorRaw),
       saldo           : parseNum(row[4]),
-      banco_origem    : 'Santander',
+      banco_origem    : bancoLabel,
       forma_pagamento : inferForma(String(row[1] || ''), SANTANDER_FORMA),
       categoria       : '',
       apuracao        : '',
@@ -254,10 +371,12 @@ function parseSantander(rows) {
   return result;
 }
 
-// ─── DETECÇÃO AUTOMÁTICA ──────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// DETECÇÃO AUTOMÁTICA DE FORMATO
+// ─────────────────────────────────────────────────────────────────────────────
 
-function detectAndParse(workbook, filename) {
-  const X    = window.XLSXStyle || window.XLSX;
+function detectAndParse(workbook, bancoLabel) {
+  const X     = getX();
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   const rows  = X.utils.sheet_to_json(sheet, {
     header   : 1,
@@ -266,24 +385,33 @@ function detectAndParse(workbook, filename) {
     cellDates: true,
   });
 
-  if (!rows.length) throw new Error('Arquivo vazio ou sem dados.');
+  if (!rows.length) throw new Error('Arquivo sem dados.');
 
-  const primeiraCell = String(rows[0][0] || '').trim().toUpperCase();
+  const primeiraCelula = String(rows[0][0] || '').trim().toUpperCase();
 
-  if (primeiraCell === 'AGENCIA') return parseSantander(rows);
+  // Santander: primeira célula é "AGENCIA"
+  if (primeiraCelula === 'AGENCIA') {
+    return parseSantander(rows, bancoLabel);
+  }
 
-  const header = rows[0].map(h => String(h).trim());
-  if (header.includes('D/C')) return parseSicoob(rows, filename);
+  // Sicoob (Valori KS / MM): tem coluna "D/C"
+  const header = rows[0].map(h => String(h || '').trim());
+  if (header.includes('D/C')) {
+    return parseSicoob(rows, bancoLabel);
+  }
 
-  // fallback
-  return parseSicoob(rows, filename);
+  throw new Error('Formato de extrato não reconhecido. Confirme o banco selecionado.');
 }
 
-// ─── PIPELINE ─────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// PIPELINE: MERGE + ORDENAÇÃO + DUPLICATAS
+// ─────────────────────────────────────────────────────────────────────────────
 
 function pipeline(todos) {
+  // Ordena por data decrescente (mais recente primeiro)
   todos.sort((a, b) => b.data - a.data);
 
+  // Marca duplicatas: mesmo banco + data + valor + início da descrição
   const visto = new Set();
   for (const row of todos) {
     const chave = [
@@ -303,37 +431,40 @@ function pipeline(todos) {
   return todos;
 }
 
-// ─── GERAÇÃO DO EXCEL ─────────────────────────────────────────────────────────
-
-function borda() {
-  const lado = { style: 'thin', color: { rgb: COR.BORDA } };
-  return { top: lado, bottom: lado, left: lado, right: lado };
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// GERAÇÃO DO EXCEL
+// ─────────────────────────────────────────────────────────────────────────────
 
 function gerarExcel(linhas) {
-  const X  = window.XLSXStyle || window.XLSX;
+  const X        = getX();
+  const comEstilo = typeof XLSXStyle !== 'undefined';
   const wb = X.utils.book_new();
   const ws = {};
-  const bd = borda();
+
+  function bordaCell() {
+    if (!comEstilo) return {};
+    const lado = { style: 'thin', color: { rgb: COR.BORDA } };
+    return { border: { top: lado, bottom: lado, left: lado, right: lado } };
+  }
 
   // Cabeçalho
   COLUNAS.forEach(({ nome }, c) => {
     const ref = X.utils.encode_cell({ r: 0, c });
     ws[ref] = {
-      v: nome, t: 's',
-      s: {
+      v: nome,
+      t: 's',
+      s: comEstilo ? {
         fill      : { patternType: 'solid', fgColor: { rgb: COR.HEADER_BG } },
         font      : { bold: true, color: { rgb: COR.HEADER_FG }, name: 'Calibri', sz: 11 },
         alignment : { horizontal: 'center', vertical: 'center' },
-        border    : bd,
-      },
+        ...bordaCell(),
+      } : undefined,
     };
   });
 
   // Dados
   linhas.forEach((row, r) => {
     const bgRgb = row.tipo === 'Entrada' ? COR.ENTRADA : COR.SAIDA;
-    const fill  = { patternType: 'solid', fgColor: { rgb: bgRgb } };
 
     const valores = [
       formatDate(row.data),
@@ -349,107 +480,139 @@ function gerarExcel(linhas) {
     ];
 
     valores.forEach((v, c) => {
-      const ref    = X.utils.encode_cell({ r: r + 1, c });
-      const isNum  = (c === 3 || c === 4) && typeof v === 'number';
-      const cell   = {
-        v: v === null || v === undefined ? '' : v,
+      const isNum = (c === 3 || c === 4) && typeof v === 'number';
+      const ref   = X.utils.encode_cell({ r: r + 1, c });
+      const cell  = {
+        v: (v === null || v === undefined) ? '' : v,
         t: isNum ? 'n' : 's',
-        s: {
-          fill,
+        s: comEstilo ? {
+          fill      : { patternType: 'solid', fgColor: { rgb: bgRgb } },
           font      : { name: 'Calibri', sz: 10 },
           alignment : { vertical: 'center', horizontal: isNum ? 'right' : 'left' },
-          border    : bd,
-        },
+          ...bordaCell(),
+        } : undefined,
       };
       if (isNum) cell.z = 'R$ #,##0.00';
       ws[ref] = cell;
     });
   });
 
-  ws['!ref']       = X.utils.encode_range({ s: { r:0, c:0 }, e: { r: linhas.length, c: COLUNAS.length-1 } });
-  ws['!cols']      = COLUNAS.map(({ wch }) => ({ wch }));
-  ws['!autofilter']= { ref: X.utils.encode_range({ s:{r:0,c:0}, e:{r:0,c:COLUNAS.length-1} }) };
-  ws['!freeze']    = { xSplit: 0, ySplit: 1 };
+  const totalRows = linhas.length;
+  ws['!ref']        = X.utils.encode_range({ s:{r:0,c:0}, e:{r:totalRows, c:COLUNAS.length-1} });
+  ws['!cols']       = COLUNAS.map(({ wch }) => ({ wch }));
+  ws['!autofilter'] = { ref: X.utils.encode_range({ s:{r:0,c:0}, e:{r:0,c:COLUNAS.length-1} }) };
+  ws['!freeze']     = { xSplit: 0, ySplit: 1 };
 
   X.utils.book_append_sheet(wb, ws, 'Conciliação');
-  return X.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+  return X.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: comEstilo });
 }
 
-// ─── LEITURA DE ARQUIVO ───────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// LEITURA DO ARQUIVO
+// ─────────────────────────────────────────────────────────────────────────────
 
 function lerArquivo(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload  = e => {
+    reader.onload = e => {
       try {
-        const X  = window.XLSXStyle || window.XLSX;
-        const wb = X.read(new Uint8Array(e.target.result), { type: 'array', cellDates: true });
+        const X  = getX();
+        const wb = X.read(new Uint8Array(e.target.result), {
+          type     : 'array',
+          cellDates: true,
+        });
         resolve(wb);
-      } catch (err) { reject(err); }
+      } catch (err) {
+        reject(new Error('Falha ao interpretar o arquivo: ' + err.message));
+      }
     };
     reader.onerror = () => reject(new Error('Falha ao ler o arquivo.'));
     reader.readAsArrayBuffer(file);
   });
 }
 
-// ─── MAIN ─────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN
+// ─────────────────────────────────────────────────────────────────────────────
 
 async function processar() {
   const btn    = document.getElementById('btn');
   const status = document.getElementById('status');
 
-  const inputs  = [
-    document.getElementById('f1'),
-    document.getElementById('f2'),
-    document.getElementById('f3'),
-  ];
-  const arquivos = inputs.map(i => i.files[0]).filter(Boolean);
+  const slots = [
+    { file: document.getElementById('f1').files[0], banco: document.getElementById('banco1').value },
+    { file: document.getElementById('f2').files[0], banco: document.getElementById('banco2').value },
+    { file: document.getElementById('f3').files[0], banco: document.getElementById('banco3').value },
+  ].filter(s => s.file);
 
-  if (!arquivos.length) {
-    status.className = 'error';
+  // Validações
+  if (!slots.length) {
+    status.className   = 'error';
     status.textContent = 'Selecione ao menos um arquivo de extrato.';
     return;
   }
+  const semBanco = slots.filter(s => !s.banco);
+  if (semBanco.length) {
+    status.className   = 'error';
+    status.textContent = `Selecione o banco para: ${semBanco.map(s => s.file.name).join(', ')}`;
+    return;
+  }
+  if (!getX()) {
+    status.className   = 'error';
+    status.textContent = 'Biblioteca não carregada. Verifique sua conexão e recarregue a página.';
+    return;
+  }
 
-  btn.disabled        = true;
-  btn.textContent     = 'Processando…';
-  status.className    = 'info';
-  status.textContent  = `Lendo ${arquivos.length} arquivo(s)…`;
+  btn.disabled       = true;
+  btn.textContent    = 'Processando…';
+  status.className   = 'info';
+  status.textContent = `Lendo ${slots.length} arquivo(s)…`;
 
   try {
-    const todos  = [];
-    const erros  = [];
+    const todos = [];
+    const log   = [];
 
-    for (const file of arquivos) {
+    for (const { file, banco } of slots) {
       try {
         const wb   = await lerArquivo(file);
-        const rows = detectAndParse(wb, file.name);
+        const rows = detectAndParse(wb, banco);
         if (!rows.length) throw new Error('Nenhuma transação encontrada.');
         todos.push(...rows);
-        status.textContent = `${file.name} — ${rows.length} lançamentos lidos.`;
+        log.push(`✓ ${banco} — ${rows.length} lançamentos`);
       } catch (e) {
-        erros.push(`${file.name}: ${e.message}`);
+        log.push(`✗ ${file.name}: ${e.message}`);
       }
     }
 
-    if (!todos.length) throw new Error('Nenhum dado válido nos arquivos. ' + erros.join(' | '));
+    status.textContent = log.join('\n');
 
-    status.textContent = 'Consolidando e gerando planilha…';
+    if (!todos.length) {
+      status.className = 'error';
+      return;
+    }
+
+    status.className   = 'info';
+    status.textContent = log.join('\n') + '\n\nConsolidando e gerando planilha…';
+
     const resultado = pipeline(todos);
     const bytes     = gerarExcel(resultado);
 
-    // Download automático
-    const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement('a');
+    a.href    = url;
     a.download = 'conciliacao_bancaria.xlsx';
     a.click();
     URL.revokeObjectURL(url);
 
-    const avisos = erros.length ? `\nAtenção: ${erros.join(' | ')}` : '';
+    const dups    = resultado.filter(r => r.observacao === 'Possível duplicata').length;
+    const avisoD  = dups ? `\n⚠ ${dups} possíveis duplicatas sinalizadas na coluna Observação.` : '';
     status.className   = 'ok';
-    status.textContent = `✓ Planilha gerada com ${resultado.length} lançamentos. Download iniciado.${avisos}`;
+    status.textContent = log.join('\n') +
+      `\n\n✓ Planilha gerada com ${resultado.length} lançamentos. Download iniciado.${avisoD}`;
+
   } catch (e) {
     status.className   = 'error';
     status.textContent = 'Erro: ' + e.message;
